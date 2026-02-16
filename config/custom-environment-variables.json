@@ -1,6 +1,7 @@
 {
   "server": {
-    "publicUrl": "BAB_PUBLIC_URL"
+    "publicUrl": "BAB_PUBLIC_URL",
+    "port": "PORT"
   },
   "database": {
     "connectionString": "DATABASE_URL"
