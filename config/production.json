@@ -1,8 +1,12 @@
 {
   "server": {
     "host": "0.0.0.0",
-    "port": "80",
+    "port": "10000",
+    "publicUrl": "https://shinobi-saga-bab.onrender.com",
     "proxy": true
+  },
+  "database": {
+    "connectionString": "placeholder"
   },
   "logging": {
     "console": {
