@@ -1,0 +1,8 @@
+{
+  "server": {
+    "publicUrl": "BAB_PUBLIC_URL"
+  },
+  "database": {
+    "connectionString": "DATABASE_URL"
+  }
+}
