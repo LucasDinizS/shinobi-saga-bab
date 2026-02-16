@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Test Client</title>
+  <style>
+    form > * {
+        display: block;
+    }
+  </style>
+</head>
+<body>
+<h2>Test Client</h2>
+
+<h3 id="welcome"></h3>
+<a id="action_link"></a>
+<hr>
+<form method="post" action="../../auth/authorize" onsubmit="onSubmit()">
+  <h3>Options</h3>
+  <label>
+    response_type
+    <input name="response_type" value="code">
+  </label>
+  <label>
+    client_id
+    <input name="client_id" value="testing">
+  </label>
+  <label>
+    redirect_uri
+    <input name="redirect_uri" id="redir_uri">
+  </label>
+  <label>
+    state
+    <input name="state" value="meow">
+  </label>
+  <label>
+    scope
+    <input name="scope" value="openid">
+  </label>
+  <label>
+    prompt
+    <input name="prompt" value="">
+  </label>
+  <label>
+    nonce
+    <input name="nonce" value="nonce be like">
+  </label>
+  <label>
+    id_token_hint
+    <input name="id_token_hint" value="">
+  </label>
+  <div>
+    Userinfo auth type
+    <input type="radio" id="userinfo_auth_header" name="userinfo_auth_type" value="header" checked  />
+    <label for="userinfo_auth_header">Header</label>
+    <input type="radio" id="userinfo_auth_query" name="userinfo_auth_type" value="query" />
+    <label for="userinfo_auth_query">Query</label>
+    <input type="radio" id="userinfo_auth_form" name="userinfo_auth_type" value="form" />
+    <label for="userinfo_auth_form">Form</label>
+  </div>
+  <hr>
+  <input type="submit" value="Login With BYOND (POST)">
+</form>
+
+<script>
+  //const params = new URLSearchParams(window.location.hash.substring(1));
+  const params = new URLSearchParams(window.location.search);
+  console.log(params, window.location)
+  const code = params.get("code");
+  const redirect = new URL(window.location);
+  redirect.hash = ""
+  redirect.search = ""
+  for (const param of [...redirect.searchParams.keys()]) {
+    redirect.searchParams.delete(param);
+  }
+
+  if (code) {
+    const welcome = document.getElementById("welcome")
+    const url = new URL("../../auth/token", window.location.href);
+
+    const params = new URLSearchParams();
+    params.set("grant_type", "authorization_code");
+    params.set("code", code);
+    params.set("redirect_uri", redirect.toString());
+    //params.set("client_id", "testing_public");
+    fetch(url.toString(), {
+      method: "POST",
+      body: params,
+      headers: {
+        Authorization: `Basic ${window.btoa(`testing:testing_secret`)}`,
+      },
+    }).then(response => response.json()).then((response) => {
+      const access_token = response.access_token;
+      welcome.innerHTML = `<span>Thank you for logging in.</span> AT: <pre>${access_token}</pre> ID: <pre>${response.id_token}</pre>`
+
+      const auth_type = window.localStorage.getItem("userinfo_auth_type") ?? "header"
+      const url = new URL("../../auth/userinfo", window.location.href);
+      if (auth_type === "header") {
+        fetch(url.toString(), {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${access_token}`,
+          },
+        }).then(handle_userinfo_response)
+      } else if (auth_type === "query") {
+        const search = new URLSearchParams(url.searchParams);
+        search.set("access_token", access_token);
+        url.search = search.toString();
+        fetch(url.toString(), {
+          method: "GET",
+        }).then(handle_userinfo_response)
+      } else if (auth_type === "form") {
+        fetch(url.toString(), {
+          method: "POST",
+          body: new URLSearchParams({access_token}),
+        }).then(handle_userinfo_response)
+      }
+
+      async function handle_userinfo_response(response) {
+        response = await response.json();
+        welcome.innerHTML += `User Info: <pre>${JSON.stringify(response, null, 2)}</pre>`;
+        console.log(response)
+      }
+    });
+  }
+
+  if(code) {
+    const link = document.getElementById("action_link");
+    const url = new URL(window.location.href);
+    url.search = ""
+    url.hash = ""
+    link.href = url.toString()
+    link.text = "Logout"
+  }
+
+
+
+  document.getElementById("redir_uri").value = redirect.toString();
+
+  function onSubmit() {
+    const type = document.querySelector('input[name="userinfo_auth_type"]:checked').value
+    window.localStorage.setItem("userinfo_auth_type", type)
+  }
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+# Docker Compose for BAB (BYOND Authentication Bridge)
+# Run with: docker compose up -d
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: bab
+    volumes:
+      - bab-db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bab"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # BAB - BYOND Authentication Bridge
+  bab:
+    build:
+      context: .
+    restart: unless-stopped
+    init: true
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql://postgres:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/bab?schema=bab
+    volumes:
+      - bab-logs:/app/logs
+      - ./bab-config.json:/app/config/local.json:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost/.well-known/openid-configuration || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    ports:
+      - "${BAB_PORT:-8080}:80"
+
+volumes:
+  bab-db:
+  bab-logs:

@@ -1,0 +1,32 @@
+{
+  "server": {
+    "publicUrl": "http://localhost:8080",
+    "host": "0.0.0.0",
+    "port": "80",
+    "proxy": false
+  },
+  "database": {
+    "connectionString": "postgresql://postgres:YOUR_PASSWORD@db:5432/bab?schema=bab"
+  },
+  "logging": {
+    "http": {
+      "level": "info",
+      "meta": false
+    },
+    "file": {
+      "enabled": true
+    },
+    "file-err": {
+      "enabled": true
+    },
+    "console": {
+      "enabled": true,
+      "level": "info",
+      "pretty": true
+    }
+  },
+  "security": {
+    "test": false,
+    "enforce_redirect_uri": true
+  }
+}
